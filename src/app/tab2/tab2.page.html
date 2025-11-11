@@ -47,11 +47,11 @@
 
                 <ion-button 
                   expand="block" 
-                  (click)="tomarFotoMedidor()"
+                  (click)="seleccionarFotoMedidor()"
                   [color]="lectura.foto_medidor ? 'success' : 'primary'"
                 >
                   <ion-icon slot="start" name="camera"></ion-icon>
-                  {{ lectura.foto_medidor ? 'Volver a capturar' : 'Capturar Foto' }}
+                  {{ lectura.foto_medidor ? 'Cambiar Foto' : 'Agregar Foto' }}
                 </ion-button>
               </div>
             </ion-col>
@@ -77,11 +77,11 @@
 
                 <ion-button 
                   expand="block" 
-                  (click)="tomarFotoFachada()"
+                  (click)="seleccionarFotoFachada()"
                   [color]="lectura.foto_fachada ? 'success' : 'primary'"
                 >
                   <ion-icon slot="start" name="camera"></ion-icon>
-                  {{ lectura.foto_fachada ? 'Volver a capturar' : 'Capturar Foto' }}
+                  {{ lectura.foto_fachada ? 'Cambiar Foto' : 'Agregar Foto' }}
                 </ion-button>
               </div>
             </ion-col>
@@ -109,8 +109,8 @@
           <ion-item lines="none">
             <ion-icon name="checkmark-circle" color="success" slot="start"></ion-icon>
             <ion-label>
-              <p><strong>Latitud:</strong> {{ lectura.latitud }}</p>
-              <p><strong>Longitud:</strong> {{ lectura.longitud }}</p>
+              <p><strong>Latitud:</strong> {{ lectura.latitud?.toFixed(6) }}</p>
+              <p><strong>Longitud:</strong> {{ lectura.longitud?.toFixed(6) }}</p>
             </ion-label>
           </ion-item>
 

@@ -1,3 +1,4 @@
+// filepath: c:\movilas25b\repasoex1medidores\src\app\tab2\tab2.page.ts
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -26,7 +27,8 @@ import {
   IonText,
   LoadingController,
   ToastController,
-  AlertController
+  AlertController,
+  ActionSheetController
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { 
@@ -37,7 +39,9 @@ import {
   logOut,
   checkmarkCircle,
   closeCircle,
-  locationOutline
+  locationOutline,
+  images,
+  cameraOutline
 } from 'ionicons/icons';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { Geolocation } from '@capacitor/geolocation';
@@ -100,6 +104,7 @@ export class Tab2Page implements OnInit {
     private loadingController: LoadingController,
     private toastController: ToastController,
     private alertController: AlertController,
+    private actionSheetController: ActionSheetController,
     private router: Router
   ) {
     addIcons({ 
@@ -110,7 +115,9 @@ export class Tab2Page implements OnInit {
       logOut,
       checkmarkCircle,
       closeCircle,
-      locationOutline
+      locationOutline,
+      images,
+      cameraOutline
     });
   }
 
@@ -125,39 +132,89 @@ export class Tab2Page implements OnInit {
     });
   }
 
-  async tomarFotoMedidor() {
-    try {
-      const image = await Camera.getPhoto({
-        quality: 80,
-        allowEditing: false,
-        resultType: CameraResultType.DataUrl,
-        source: CameraSource.Camera,
-        saveToGallery: true
-      });
-
-      this.lectura.foto_medidor = image.dataUrl || null;
-      await this.showToast('Foto del medidor capturada', 'success');
-    } catch (error) {
-      console.error('Error al tomar foto del medidor:', error);
-      await this.showToast('Error al capturar la foto del medidor', 'danger');
-    }
+  async seleccionarFotoMedidor() {
+    const actionSheet = await this.actionSheetController.create({
+      header: 'Seleccionar Foto del Medidor',
+      buttons: [
+        {
+          text: 'Tomar Foto',
+          icon: 'camera-outline',
+          handler: () => {
+            this.tomarFoto('medidor', CameraSource.Camera);
+          }
+        },
+        {
+          text: 'Seleccionar de Galería',
+          icon: 'images',
+          handler: () => {
+            this.tomarFoto('medidor', CameraSource.Photos);
+          }
+        },
+        {
+          text: 'Cancelar',
+          icon: 'close',
+          role: 'cancel'
+        }
+      ]
+    });
+    await actionSheet.present();
   }
 
-  async tomarFotoFachada() {
+  async seleccionarFotoFachada() {
+    const actionSheet = await this.actionSheetController.create({
+      header: 'Seleccionar Foto de la Fachada',
+      buttons: [
+        {
+          text: 'Tomar Foto',
+          icon: 'camera-outline',
+          handler: () => {
+            this.tomarFoto('fachada', CameraSource.Camera);
+          }
+        },
+        {
+          text: 'Seleccionar de Galería',
+          icon: 'images',
+          handler: () => {
+            this.tomarFoto('fachada', CameraSource.Photos);
+          }
+        },
+        {
+          text: 'Cancelar',
+          icon: 'close',
+          role: 'cancel'
+        }
+      ]
+    });
+    await actionSheet.present();
+  }
+
+  async tomarFoto(tipo: 'medidor' | 'fachada', source: CameraSource) {
     try {
       const image = await Camera.getPhoto({
         quality: 80,
         allowEditing: false,
         resultType: CameraResultType.DataUrl,
-        source: CameraSource.Camera,
-        saveToGallery: true
+        source: source,
+        saveToGallery: source === CameraSource.Camera,
+        promptLabelHeader: tipo === 'medidor' ? 'Foto del Medidor' : 'Foto de la Fachada',
+        promptLabelPhoto: 'Seleccionar de Galería',
+        promptLabelPicture: 'Tomar Foto'
       });
 
-      this.lectura.foto_fachada = image.dataUrl || null;
-      await this.showToast('Foto de la fachada capturada', 'success');
-    } catch (error) {
-      console.error('Error al tomar foto de la fachada:', error);
-      await this.showToast('Error al capturar la foto de la fachada', 'danger');
+      if (tipo === 'medidor') {
+        this.lectura.foto_medidor = image.dataUrl || null;
+        await this.showToast('Foto del medidor capturada', 'success');
+      } else {
+        this.lectura.foto_fachada = image.dataUrl || null;
+        await this.showToast('Foto de la fachada capturada', 'success');
+      }
+    } catch (error: any) {
+      console.error(`Error al capturar foto de ${tipo}:`, error);
+      
+      // No mostrar error si el usuario cancela
+      if (!error.message?.includes('cancelled') && !error.message?.includes('cancel')) {
+        await this.showToast(`Error al capturar la foto de ${tipo}`, 'danger');
+      }
     }
   }
 
@@ -168,27 +225,45 @@ export class Tab2Page implements OnInit {
     await loading.present();
 
     try {
-      // Solicitar permisos
-      const permissions = await Geolocation.requestPermissions();
+      // Primero verificar y solicitar permisos
+      const permissions = await Geolocation.checkPermissions();
       
-      if (permissions.location === 'granted') {
-        const position = await Geolocation.getCurrentPosition({
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 0
-        });
-
-        this.lectura.latitud = position.coords.latitude;
-        this.lectura.longitud = position.coords.longitude;
-        this.locationObtained = true;
-
-        await this.showToast('Ubicación obtenida correctamente', 'success');
-      } else {
-        await this.showToast('Se requieren permisos de ubicación', 'warning');
+      if (permissions.location !== 'granted') {
+        const request = await Geolocation.requestPermissions();
+        
+        if (request.location !== 'granted') {
+          await loading.dismiss();
+          await this.showToast('Se requieren permisos de ubicación para continuar', 'warning');
+          return;
+        }
       }
-    } catch (error) {
+
+      // Obtener ubicación con configuración optimizada
+      const position = await Geolocation.getCurrentPosition({
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 0
+      });
+
+      this.lectura.latitud = position.coords.latitude;
+      this.lectura.longitud = position.coords.longitude;
+      this.locationObtained = true;
+
+      await this.showToast('Ubicación obtenida correctamente', 'success');
+    } catch (error: any) {
       console.error('Error al obtener ubicación:', error);
-      await this.showToast('Error al obtener la ubicación GPS', 'danger');
+      
+      let mensaje = 'Error al obtener la ubicación GPS';
+      
+      if (error.message?.includes('timeout')) {
+        mensaje = 'Tiempo de espera agotado. Asegúrate de tener GPS activado';
+      } else if (error.message?.includes('permission')) {
+        mensaje = 'Permisos de ubicación denegados';
+      } else if (error.message?.includes('unavailable')) {
+        mensaje = 'GPS no disponible. Activa la ubicación en tu dispositivo';
+      }
+      
+      await this.showToast(mensaje, 'danger');
     } finally {
       await loading.dismiss();
     }
@@ -197,7 +272,7 @@ export class Tab2Page implements OnInit {
   abrirEnMaps() {
     if (this.lectura.latitud && this.lectura.longitud) {
       const url = `https://www.google.com/maps?q=${this.lectura.latitud},${this.lectura.longitud}`;
-      window.open(url, '_blank');
+      window.open(url, '_system');
     }
   }
 
