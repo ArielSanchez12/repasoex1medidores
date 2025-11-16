@@ -3,9 +3,11 @@
     <ion-title>
       {{ userRole === 'administrador' ? 'Todas las Lecturas' : 'Mis Lecturas' }}
     </ion-title>
-    <ion-button slot="end" fill="clear" (click)="confirmarCerrarSesion()">
-      <ion-icon slot="icon-only" name="log-out"></ion-icon>
-    </ion-button>
+    <ion-buttons slot="end">
+      <ion-button fill="solid" color="danger" (click)="confirmarCerrarSesion()">
+        <ion-icon slot="icon-only" name="log-out"></ion-icon>
+      </ion-button>
+    </ion-buttons>
   </ion-toolbar>
   
   <!-- Barra de búsqueda y filtros -->
@@ -132,7 +134,7 @@
           <ion-row>
             <ion-col size="6">
               <div class="photo-item" (click)="verImagen(lectura.foto_medidor, 'del Medidor')">
-                <ion-img [src]="lectura.foto_medidor"></ion-img>
+                <img [src]="lectura.foto_medidor" alt="Foto del medidor" loading="lazy" />
                 <div class="photo-overlay">
                   <ion-icon name="camera"></ion-icon>
                   <p>Medidor</p>
@@ -141,7 +143,7 @@
             </ion-col>
             <ion-col size="6">
               <div class="photo-item" (click)="verImagen(lectura.foto_fachada, 'de la Fachada')">
-                <ion-img [src]="lectura.foto_fachada"></ion-img>
+                <img [src]="lectura.foto_fachada" alt="Foto de la fachada" loading="lazy" />
                 <div class="photo-overlay">
                   <ion-icon name="home"></ion-icon>
                   <p>Fachada</p>
@@ -166,7 +168,7 @@
         </div>
 
         <!-- Observaciones si existen -->
-        <div *ngIf="lectura.observaciones" class="observaciones">
+        <div *ngIf="lectura.observaciones" class="observaciones location-info">
           <ion-icon name="information-circle" color="primary"></ion-icon>
           <div>
             <ion-text>

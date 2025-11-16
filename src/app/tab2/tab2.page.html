@@ -1,9 +1,11 @@
 <ion-header [translucent]="true">
   <ion-toolbar color="primary">
     <ion-title>Registrar Lectura</ion-title>
-    <ion-button slot="end" fill="clear" (click)="confirmarCerrarSesion()">
-      <ion-icon slot="icon-only" name="log-out"></ion-icon>
-    </ion-button>
+    <ion-buttons slot="end">
+      <ion-button fill="solid" color="danger" (click)="confirmarCerrarSesion()">
+        <ion-icon slot="icon-only" name="log-out"></ion-icon>
+      </ion-button>
+    </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
